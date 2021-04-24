@@ -286,7 +286,7 @@ Non-parametric bootstrap results written to:
 Bootstrap trees:          combined_samples.aln.boottrees
   Consensus tree:           combined_samples.aln.contree
 ```
-This tells us what is contained in the multiple output files produced by IQ-TREE.
+This tells us what is contained in the multiple output files that are produced by IQ-TREE.
 
 
 
