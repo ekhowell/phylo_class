@@ -1,19 +1,78 @@
 # Phylogenetics Final Report Reproducible Script
 #### By: Emma Howell
-#### Last Updated: 4/8/21
+#### Last Updated: 4/24/21
 Purpose: To record steps in phylogenetic analysis of PRDM9 locus in house mouse subspecies complex.
 
 ## Note
 This README will include all the steps necessary to recreate this analysis. However, all of the required files/data are contained within this repository so there is no need to re-download VCF files or re-fetch GTF and reference files from UCSC's Table Browser.
 
 ## Installing Software
-Required software: vcftools and bcftools (in a conda environment), MUSCLE, and IQ-TREE
+Required software: vcftools, bcftools, tabix, MUSCLE, and IQ-TREE.
+
+A conda environment will be used to install/manage the packages used in this analysis. Follow the steps below to install Miniconda.
+
+The subsequent sections provides the commands used to install the required software. For those wishing to generate an exact replica of the conda environment used here, the YAML file "phylo_project_env.yml" in the packages directory provides and alternative to the individual installation steps.
+
+This command will build a conda environment from the YAML file.
+```
+conda env create --file phylo_project_env.yml
+```
+
+#### Installing Miniconda
+Follow the instructions provided here to install Miniconda: 
+
+For MacOS users, Miniconda can be installed with a few short commands.
+
+Download Miniconda.
+```
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+```
+
+Run the Miniconda installer and follow the prompts.
+```
+bash Miniconda3-latest-Linux-x86_64.sh
+```
+
 #### Creating Conda Environment
-[TO DO]
-#### Installing MUSCLE
-[TO DO]
-#### Installing IQ-TREE
-[TO DO]
+Run this command to create a new conda environment called "phylo_project" within which we can install the necessary software.
+```
+conda create --name phylo_project python=3.8
+```
+
+Then, activate the conda environment.
+```
+source activate phylo_project
+```
+Now we can install the software needed for this project. This includes `vcftools`, `bcftools`, and `tabix` to manipulate the VCF input files. The software needed for the phylogenetic analysis includes `muscle` and `iq-tree`.
+
+First, install the software for working with the input files.
+```
+conda install vcftools
+conda install bcftools
+conda install tabix
+```
+Next, install the software for the phylogenetic analyses
+```
+conda install muscle
+conda install -c bioconda iqtree
+```
+
+In order to ensure reproducibility of this analysis, I will package this conda environment into the phylo_project_env.yml file that can be found in the packages directory.
+
+Here is the command used to package my conda environment.
+```
+conda env export --name phylo_project_test > phylo_project_env.yml
+```
+
+In order to ensure that the conda environment is consistent for other users, those wanting an alternative to installing software separately can simply run the following command to generate a replica environment from the provided YAML file.
+```
+conda env create --file phylo_project_env.yml
+```
+
+Activate the environment by running the following command.
+```
+source activate phylo_project
+```
 
 ## Step 1: Get Wild Mouse Genomes
 Go here to download the VCF file containing the filtered SNPs of the wild mouse samples (Warning: LARGE)
@@ -55,7 +114,7 @@ chr17	15562814	15562937
 chr17	15563221	15563301
 ```
 
-## Step 3: Extract PRDM9 Variants From Whole Genomes
+## Step 3: Extract PRDM9 Variants from Whole Genomes
 Now that we have a list of the genomic intervals that contain the PRDM9 CDS, we can use this to pull out SNPs in the house mouse genomes that are falling within these intervals.
 
 This vcftools command will output a new VCF file containing only SNPs falling within the regions specified by the BED file:
@@ -182,3 +241,55 @@ CAGGGGAGAAGCCCTATGTTTGCAGGGAGTGTGGGCGGGGCTTTACACAG
 ```
 
 Now we are ready for the multiple sequence alignment!
+
+## Generating Multiple Sequence Alignment with MUSCLE
+To generate the multiple sequence alignment using MUSCLE, run the following command on the FASTA file containing the combined samples.
+```
+muscle -in combined_samples.fa -phyi -out combined_samples.aln
+```
+This will produce an alignment in PHYLIP format within the "combined_samples.aln" file. The top of this output file should look like this:
+```
+67 2494
+Ms_SPRE1_S AGTCAGAAAT TCCTCACTCA ACATATGGAA TGGAATCATC GCACTGAAAT
+Ms_SPRE2_S AGTCAGAAAT TCCTCACTCA ACATATGGAA TGGAATCATC GCACTGAAAT
+Ms_SPRE3_S AGTCAGAAAT TCCTCACTCA ACATATGGAA TGGAATCATC GCACTGAAAT
+Ms_SPRE4_S AGTCAGAAAT TCCTCACTCA ACATATGGAA TGGAATCATC GCACTGAAAT
+Ms_SPRE5_S AGTCAGAAAT TCCTCACTCA ACATATGGAA TGGAATCATC GCACTGAAAT
+Ms_SPRE6_S AGTCAGAAAT TCCTCACTCA ACATATGGAA TGGAATCATC GCACTGAAAT
+Ms_SPRE7_S AGTCAGAAAT TCCTCACTCA ACATATGGAA TGGAATCATC GCACTGAAAT
+Ms_SPRE8_S AGTCAGAAAT TCCTCACTCA ACATATGGAA TGGAATCATC GCACTGAAAT
+Mmm_AFG2_4 AGTCAGAAAT TCCTCACTCA ACATATGGAA TGGAATCATC GCACTGAAAT
+```
+
+Now we can input this multiple sequence alignment into IQ-TREE to start our phylogenetic tree estimation.
+
+## Generating Phylogeny with IQ-TREE
+To perform the phylogenetic tree construction using IQ-TREE, run the following command on the alignment file generated from the MUSCLE step.
+```
+iqtree -s combined_samples.aln -m MFP -b 100
+```
+
+This command strings together multiple of IQ-TREE's functions into a single line of code. The `-m MFP` argument tells IQ-TREE to use ModelFinderPlus to identify the best fit substitution model to use on the data. Then, IQ-TREE constructs a maximum likelihood tree from the alignment supplied by the `-s combined_samples.aln` argument using the best fit substitution model. After constructing the tree, the `-b 100` argument tells IQ-TREE to perform 100 non-parametric bootstrap replicates to evaluate branch supports. 
+
+After running this command, IQ-TREE should direct a lot of output to the screen. Once it has finished running, the final bit of output should look like this.
+```
+Analysis results written to: 
+  IQ-TREE report:                combined_samples.aln.iqtree
+  Maximum-likelihood tree:       combined_samples.aln.treefile
+  Likelihood distances:          combined_samples.aln.mldist
+  Screen log file:               combined_samples.aln.log
+
+Total CPU time for bootstrap: 172.855 seconds.
+Total wall-clock time for bootstrap: 153.781 seconds.
+
+Non-parametric bootstrap results written to:
+Bootstrap trees:          combined_samples.aln.boottrees
+  Consensus tree:           combined_samples.aln.contree
+```
+This tells us what is contained in the multiple output files produced by IQ-TREE.
+
+
+
+
+
+
