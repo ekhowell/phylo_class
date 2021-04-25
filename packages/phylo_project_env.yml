@@ -1,6 +1,47 @@
-name: phylo_project_test
+name: phylo_project
 channels:
   - conda-forge
   - bioconda
   - defaults
-prefix: /Users/ekhowell/miniconda3/envs/phylo_project_test
+dependencies:
+  - bcftools=1.9=h16e57c4_9
+  - bzip2=1.0.8=h0d85af4_4
+  - c-ares=1.17.1=h0d85af4_1
+  - ca-certificates=2020.12.5=h033912b_0
+  - certifi=2020.12.5=py38h50d1736_1
+  - curl=7.76.1=h06286d4_1
+  - gsl=2.5=ha2d443c_1
+  - htslib=1.9=h3a161e8_7
+  - iqtree=2.1.2=h31d8819_0
+  - krb5=1.17.2=h60d9502_0
+  - libblas=3.9.0=8_openblas
+  - libcblas=3.9.0=8_openblas
+  - libcurl=7.76.1=h8ef9fac_1
+  - libcxx=11.1.0=habf9029_0
+  - libdeflate=1.0=h1de35cc_1
+  - libedit=3.1.20191231=h0678c8f_2
+  - libev=4.33=haf1e3a3_1
+  - libffi=3.3=h046ec9c_2
+  - libgfortran=5.0.0=9_3_0_h6c81a4c_22
+  - libgfortran5=9.3.0=h6c81a4c_22
+  - libnghttp2=1.43.0=h07e645a_0
+  - libopenblas=0.3.12=openmp_h54245bb_1
+  - libssh2=1.9.0=h52ee1ee_6
+  - llvm-openmp=11.1.0=hda6cdc1_1
+  - muscle=3.8.1551=hb280591_6
+  - ncurses=6.2=h2e338ed_4
+  - openssl=1.1.1k=h0d85af4_0
+  - perl=5.32.0=hbcb3906_0
+  - pip=20.3.4=pyhd8ed1ab_0
+  - python=3.8.8=h4e93d89_0_cpython
+  - python_abi=3.8=1_cp38
+  - readline=8.1=h05e3726_0
+  - setuptools=49.6.0=py38h50d1736_3
+  - sqlite=3.35.5=h44b9ce1_0
+  - tabix=1.11=hdfd78af_0
+  - tk=8.6.10=h0419947_1
+  - vcftools=0.1.16=h87af4ef_5
+  - wheel=0.36.2=pyhd3deb0d_0
+  - xz=5.2.5=haf1e3a3_1
+  - zlib=1.2.11=h7795811_1010
+prefix: /Users/ekhowell/miniconda3/envs/phylo_project

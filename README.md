@@ -1,49 +1,48 @@
 # Phylogenetics Final Report Reproducible Script
 #### By: Emma Howell
 #### Last Updated: 4/24/21
-Purpose: To record steps in phylogenetic analysis of PRDM9 locus in house mouse subspecies complex.
+Purpose: To record the steps used in the phylogenetic analysis of the PRDM9 locus in house mouse subspecies complex.
 
 ## Note
-This README will include all the steps necessary to recreate this analysis. However, all of the required files/data are contained within this repository so there is no need to re-download VCF files or re-fetch GTF and reference files from UCSC's Table Browser.
+This README will include all the steps necessary to recreate this analysis. However, all of the required input files/data are contained within this repository. This allows users to bypass the steps that involve downloading the (large) VCF files and fetching/formatting the reference files and GTF file obtained from UCSC's Table Browser.
 
 ## Installing Software
 Required software: vcftools, bcftools, tabix, MUSCLE, and IQ-TREE.
 
 A conda environment will be used to install/manage the packages used in this analysis. Follow the steps below to install Miniconda.
 
-The subsequent sections provides the commands used to install the required software. For those wishing to generate an exact replica of the conda environment used here, the YAML file "phylo_project_env.yml" in the packages directory provides and alternative to the individual installation steps.
+In order to ensure the reproducibility of the analysis, the conda environment used in this pipeline has been packaged into a YAML file contained within the [packages](https://github.com/ekhowell/phylo_class/tree/master/packages) directory. This allows users to bypass the installation steps and ensure that they are using the correct version of each software.
 
-This command will build a conda environment from the YAML file.
+Those wishing to build a conda environment from the YAML file should use the following command.
 ```
 conda env create --file phylo_project_env.yml
 ```
 
 #### Installing Miniconda
-Follow the instructions provided here to install Miniconda: 
+In order to build a conda environment, users must first install Miniconda. Follow the instructions provided [here](https://conda.io/projects/conda/en/latest/user-guide/install/index.html) or see below for a quick guide for MacOS users.
 
-For MacOS users, Miniconda can be installed with a few short commands.
-
-Download Miniconda.
+First, download the Linux distribution of Miniconda.
 ```
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 ```
 
-Run the Miniconda installer and follow the prompts.
+Then, run the Miniconda installer and follow the prompts.
 ```
 bash Miniconda3-latest-Linux-x86_64.sh
 ```
 
 #### Creating Conda Environment
-Run this command to create a new conda environment called "phylo_project" within which we can install the necessary software.
+Now that Miniconda is installed, we can create a new conda environment called `phylo_project` that will store all of the necessary software.
 ```
 conda create --name phylo_project python=3.8
 ```
 
-Then, activate the conda environment.
+Activate the environment using this command.
 ```
 source activate phylo_project
 ```
-Now we can install the software needed for this project. This includes `vcftools`, `bcftools`, and `tabix` to manipulate the VCF input files. The software needed for the phylogenetic analysis includes `muscle` and `iq-tree`.
+
+Now we can install the software needed for this project. This includes `vcftools`, `bcftools`, and `tabix` to manipulate the VCF input files. The software needed for the phylogenetic analyses includes `muscle` and `iqtree`.
 
 First, install the software for working with the input files.
 ```
@@ -51,20 +50,20 @@ conda install vcftools
 conda install bcftools
 conda install tabix
 ```
-Next, install the software for the phylogenetic analyses
+Next, install the software for the phylogenetic analyses.
 ```
 conda install muscle
 conda install -c bioconda iqtree
 ```
 
-In order to ensure reproducibility of this analysis, I will package this conda environment into the phylo_project_env.yml file that can be found in the packages directory.
+In order to ensure reproducibility of this analysis (i.e. consistency across software versions) I have packaged this conda environment into the `phylo_project_env.yml` which can be found [here](https://github.com/ekhowell/phylo_class/tree/master/packages).
 
-Here is the command used to package my conda environment.
+This command was used to package the built conda environment into a YAML file.
 ```
-conda env export --name phylo_project_test > phylo_project_env.yml
+conda env export --name phylo_project > phylo_project_env.yml
 ```
 
-In order to ensure that the conda environment is consistent for other users, those wanting an alternative to installing software separately can simply run the following command to generate a replica environment from the provided YAML file.
+A new conda environment can be built from the YAML file using this command. **NOTE** this step is only neccesary for those that don't want to follow the above steps to install the packages from scratch.
 ```
 conda env create --file phylo_project_env.yml
 ```
@@ -75,14 +74,25 @@ source activate phylo_project
 ```
 
 ## Step 1: Get Wild Mouse Genomes
-Go here to download the VCF file containing the filtered SNPs of the wild mouse samples (Warning: LARGE)
-http://wwwuser.gwdg.de/~evolbio/evolgen/wildmouse/vcf/
-Download the files named "AllMouse.vcf_90_recalibrated_snps_raw_indels_reheader_PopSorted.PASS.vcf.gz" and "AllMouse.vcf_90_recalibrated_snps_raw_indels_reheader_PopSorted.PASS.vcf.gz.tbi"
+The sequence data used in this analysis comes from the study published by [Harr et al. (2016)](https://www.nature.com/articles/sdata201675). It contains 67 whole genome sequences sampled collectively from *M. m. domesticus*, *M. m. helgolandicus*, *M. m. musculus*, *M. m. castaneus*, and *M. spretus*. The sequence data is represented in VCF format.
+
+To get the VCF file containing the filtered SNP calls for the wild mouse samples, download the files `AllMouse.vcf_90_recalibrated_snps_raw_indels_reheader_PopSorted.PASS.vcf.gz` and `AllMouse.vcf_90_recalibrated_snps_raw_indels_reheader_PopSorted.PASS.vcf.gz.tbi` from the [data repository](http://wwwuser.gwdg.de/~evolbio/evolgen/wildmouse/vcf/). 
+```
+wget http://wwwuser.gwdg.de/~evolbio/evolgen/wildmouse/vcf/AllMouse.vcf_90_recalibrated_snps_raw_indels_reheader_PopSorted.PASS.vcf.gz
+wget http://wwwuser.gwdg.de/~evolbio/evolgen/wildmouse/vcf/AllMouse.vcf_90_recalibrated_snps_raw_indels_reheader_PopSorted.PASS.vcf.gz.tbi
+```
+*WARNING:* These files are **extremely** large. It is recommended that you start with the PRDM9-subset VCF file contained withing the [vcf](https://github.com/ekhowell/phylo_class/tree/master/vcfs) directory.
 
 ## Step 2: Get Genomic Coordinates of PRDM9 Locus
-Next, we need a file that tells us what region of the house mouse genome (build mm10) contains the PRDM9 CDS. We can do this using the UCSC Genome Table Browser. This will give us a GTF file for PRDM9 in the mm10 reference genome. The entries into the Table Browser should be filled out like this:
-https://genome.ucsc.edu/cgi-bin/hgTables?position=chr17:15543072-15563331&hgsid=1075670165_3pAqvF1yoQSPd61qGTSNji15a0MT&refGene=pack&refGene_sel=1&refSeqComposite_sel=1&hgFind.matches=NM_144809,
-Download the output file as "mm10_prdm9_ncbi_refseq_gtf.txt"
+Now that we have the whole genome sequence data for the wild mice, we need to extract only the part of the sequence that encapsulates the PRDM9 locus. To do this, we need a file that tells us which region of the house mouse genome (build mm10) contains the coding sequence for PRDM9.
+
+We can do this using the [UCSC Genome Table Browser](https://genome.ucsc.edu/cgi-bin/hgTables?hgsid=1095755405_6eTpb3HakfAUV5GkApZw12O9ivSZ) to search for the PRDM9 gene in the mouse genome. This will give us a GTF file containing the location and relevant components of the PRDM9 locus in the mm10 reference genome. The entries into the Table Browser should be filled out as follows:
+- Group: `Genes and Gene Predictions`
+- Track: `NCBI RefSeq`
+- Table: `RefSeq All (ncbiRefSeq)`
+- Region: `chr17:15,543,072-15,563,331`
+Choose GTF as the file format and download the output table as `mm10_prdm9_ncbi_refseq_gtf.txt`.
+**Note:** This GTF file can also be found in the [refs](https://github.com/ekhowell/phylo_class/tree/master/refs) directory.
 
 The top of the file should look like this:
 ```
@@ -97,10 +107,13 @@ chr17   mm10_ncbiRefSeq CDS     15555087        15555358        0.000000        
 chr17   mm10_ncbiRefSeq exon    15555087        15555358        0.000000        -       .       gene_id "XM_006523988.3"; transc
 chr17   mm10_ncbiRefSeq CDS     15555566        15555667        0.000000        -       2       gene_id "XM_006523988.3"; transc
 ```
-We only want the features labeled NM_144809.2 because this is the accession number for the PRDM9 CDS reference sequence. We also need to convert this GTF file into BED file format (only need the CHROM, START, and STOP columns) in order to intersect these genomic coordinates with the records in the VCF file. To do this, we can use the following command:
+
+This contains PRDM9 locus information for different tracks in the Table Browser. We only want the features labeled NM_144809.2 because this is the NCBI accession number for the PRDM9 CDS reference sequence. In order to pull these regions out of the VCF file, we also need to convert this GTF file into BED file format. Since the BED file specification only requires a CHR, START, and STOP column, we need to remove the extraneous information contained within the GTF file.
+
+This command will both extract the NM_144809.2 features from the GTF file and remove the additional columns so that the output conforms to the BED file format.
 `cat mm10_prdm9_ncbi_refseq_gtf.txt | grep "NM_144809.2" | grep "CDS" | cut -f1,4,5 > mm10_prdm9_ncbi_refseq_gtf.bed`
 
-Now, you should have a file that looks like this:
+The resulting file should look like this:
 ```
 chr17	15543976	15545360
 chr17	15553352	15553545
@@ -113,33 +126,46 @@ chr17	15562415	15562522
 chr17	15562814	15562937
 chr17	15563221	15563301
 ```
+**Note:** This final BED file can be found in the [refs](https://github.com/ekhowell/phylo_class/tree/master/refs) directory.
 
 ## Step 3: Extract PRDM9 Variants from Whole Genomes
-Now that we have a list of the genomic intervals that contain the PRDM9 CDS, we can use this to pull out SNPs in the house mouse genomes that are falling within these intervals.
+Now that we have the coordinate of the PRDM9 locus CDS contained within the BED file, we can intersect the regions in the BED file with the coordinates in the whole genome VCF file to pull out the SNPs in the house mouse genome that fall within the PRDM9 locus.
 
-This vcftools command will output a new VCF file containing only SNPs falling within the regions specified by the BED file:
+This vcftools command will output a new VCF file that contains only those SNPs that overlap with the BED file intervals (i.e. SNPs within the PRDM9 locus):
 `vcftools --gzvcf AllMouse.vcf_90_recalibrated_snps_raw_indels_reheader_PopSorted.PASS.vcf.gz --bed mm10_prdm9_ncbi_refseq_gtf.bed --recode --out PRDM9_CDS_AllMouse.vcf_90_recalibrated_snps_raw_indels_reheader_PopSorted.PASS`
 
-Go ahead and compress/index this new VCF using the following commands.
+In order to run the subsequent commands this newly subsetted VCF should be compressed with `bgzip` and indexed with `tabix`.
 ```
 bgzip -c PRDM9_CDS_AllMouse.vcf_90_recalibrated_snps_raw_indels_reheader_PopSorted.PASS.recode.vcf > PRDM9_CDS_AllMouse.vcf_90_recalibrated_snps_raw_indels_reheader_PopSorted.PASS.recode.vcf.gz
 tabix -p vcf PRDM9_CDS_AllMouse.vcf_90_recalibrated_snps_raw_indels_reheader_PopSorted.PASS.recode.vcf.gz 
 ```
+**Note:** Both the uncompressed and compressed VCFs can be found within the [vcfs](https://github.com/ekhowell/phylo_class/tree/master/vcfs) directory.
 
 ## Step 4: Convert VCF to FASTA
-Now we have the variants that overlap our PRDM9 locus, but in order to do a multiple sequence alignment, we need *sequences* in FASTA format, not *variants* in VCF format.
+This new VCF file contains the variants that fall within the PRDM9 locus, but in order to perform a multiple sequence alignment and input the data into phylogenetic software, we need *sequences* in FASTA format rather than *variants* in VCF format.
 
-This really just means that we need to "fill in" the space between our variant sites with whatever nucleotide is present in the mm10 reference genome. To do this, we will use the bcftools *consensus* command.
+Essentially, this requires "filling in" the space between the variants sites with the non-variants nucleotides that are present in the m10 reference genome. This task can be performed using the `bcftools consensus` command.
+
+In order to run the `consensus` feature, we require a FASTA file that contains the mm10 reference sequence associated with the chunk of genome that we are constructing the consensus for. To obtain the PRDM9 CDS reference sequence, we can once again use the [UCSC Genome Table Browser](https://genome.ucsc.edu/cgi-bin/hgTables?hgsid=1095755405_6eTpb3HakfAUV5GkApZw12O9ivSZ).
 
 But first, we need a FASTA file that contains our reference sequence for the chunk of genome that is contained within our PRDM9 VCF. To get this reference FASTA, we need to go back to UCSC's Table Browser and this time get the reference sequence for PRDM9's CDS. 
 
-The entries into the Table Browser form should look like this:
-https://genome.ucsc.edu/cgi-bin/hgTables?position=chr17:15543072-15563331&hgsid=1077666803_GdXWz7q9AFAzAPVn9dyr5U7dGFVx&refGene=pack&refGene_sel=1&refSeqComposite_sel=1&hgFind.matches=NM_144809,
-Make sure the following options are selected in the next window:
-https://genome.ucsc.edu/cgi-bin/hgTables?hgsid=1077666803_GdXWz7q9AFAzAPVn9dyr5U7dGFVx&hgta_geneSeqType=genomic&hgta_doGenePredSequence=submit
-Download the output file as "mm10_prdm9_reference_sequence.fa".
+The entries into the Table Browser should be filled out as follows:
+- Group: `Genes and Gene Predictions`
+- Track: `NCBI RefSeq`
+- Table: `RefSeq All (ncbiRefSeq)`
+- Region: `chr17:15,543,079-15,563,323`
+Choose sequence as the file format and download the output files as `mm10_prdm9_reference_sequence.fa`.
 
-The top of the FASTA file should look something like this:
+On the next page, make sure that only the following options are checked in the "Sequence Retrieval Region Options" section:
+- CDS Exons
+- One FASTA record per region
+
+Check the following options in the "Sequence Formatting Options" sections:
+- All upper case
+- Mask repeats to lower case
+
+The top of the downloaded FASTA file should look like this:
 ```
 >mm10_ncbiRefSeq_XM_006523988.3_0 range=chr17:15563221-15563301 5'pad=0 3'pad=0 strand=- repeatMasking=none
 ATGTCCTGCACCATGAACACCAACAAGCTGGAAGAAAATAGTCCTGAAGA
@@ -154,15 +180,15 @@ AAACCCCAAATAAATGACAGTGAGGATTCTGATGAAGAGTGGACACCTAA
 GCAACAAG
 ```
 
-Much like with the GTF file, we only want the FASTA records that correspond to the accession number "NM_144809.2". With one record for each exon in the CDS, this should equate to a total of **10** records with the accession number "NM_144809.2" in the header. 
+Similar to the GTF file, this FASTA contains sequences for other Table Broswer tracks whereas we only want those corresponding to the accession number NM_144809.2. With one record for each exon in the CDS, there should be a total of **10** records within the downloaded FASTA that contain the accession number NM_144809.2 in the header. 
 
-Unfortunately, there's no straightforward way that I've tried yet to automatically extract these specific records [TO DO]. So instead, open up nano and delete the records that do not contain "NM_144809.2" in the header. 
+Unfortunately, there's no straightforward way to automatically extract these specific records. This means that the file must be manually edited. One way to do this is to open the file with `nano` and delete the records that do not contain NM_144809.2 in the header.
 
-While you're at it, you need to alter the content of the remaining headers so that they are in the format:
-`>chr:start-stop`
-If the FASTA records for each exon are not in this format in the reference, then bcftools will not be able to recognize them as genomic coordinates when we are converting out VCF to FASTA. Again, there is no better way to do this yet than to just open nano and fix it [TO DO].
+In addition, in order to be compatible with the VCF file, the headings of the remaining records beed to be in the format `>chr:start-stop`. Otherwise, `bcftools` will not be able to reconcile the coordinates in the VCF file with the sequences in the FASTA file when building the consensus sequences. These will also require manual editing.
 
-(Note: For an edited version of this file, see the refs/ directory). At the end of all this, your new mm10_prdm9_reference_sequence.fa should look like this:
+To ensure the reproducibility of this analysis, the manually-edited reference FASTA can be found in the [refs](https://github.com/ekhowell/phylo_class/tree/master/refs) directory. 
+
+The top of the resulting `mm10_prdm9_reference_sequence.fa` file should look like this:
 ```
 >chr17 15543973-15545360
 AACTAAGGACAGAAATTCATCCTTGTCTTTTGTGCTCTTTGGCCTTCTCA
@@ -176,11 +202,11 @@ GTCAAATCATTTATTGCATCAGAAATCTCAAGTATTGAAAGACAATGTGG
 GCAATATTTCAGTGATAAGTCAAATGTCAATGAGCACCAGAAGACACACA
 ```
 
-Now that we have the reference sequence, we can drop in the variants from our VCF file for each sample in order to create a "consensus" FASTA for each of our sequences. Here is the structure of the bcftools command:
+Using the reference sequence as a backbone, the variants within the VCF file can be "dropped-in" for each sample in order to create a "filled-in" sequence for each of the mouse samples. Here is the structure of the `bcftools` command used to acheive this:
 `bcftools consensus -f reference.fa -s sample_name -o output.fa vcf_file.vcf.gz`
-Note how we need to specify *which* sample we want to create the FASTA for. This means that this command must be run for *each* sample using the names contained within the VCF file. 
+Note how this requires specifying *which* sample the FASTA is being created for. This means that the command must be run for *each* sample using the names contained within the VCF file. 
 
-From Harr et al. (2016), here are the names and subpopulation affiliation for each of the sequences contained within the VCF file:
+From [Harr et al. (2016)](https://www.nature.com/articles/sdata201675), below are the names and subpopulation affiliations for each of the sequences contained within the VCF file:
 ```
 Mmd_FRA: Mmd_FRA1_14.variant,Mmd_FRA2_15B.variant,Mmd_FRA3_16B.variant,Mmd_FRA4_18B.variant,Mmd_FRA5_B2C.variant,Mmd_FRA6_C1.variant,Mmd_FRA7_E1.variant,Mmd_FRA8_F1B.variant
 Mmd_GER: Mmd_GER1_TP1.variant2,Mmd_GER2_TP121B.variant2,Mmd_GER3_TP17-2.variant2,Mmd_GER4_TP3-92.variant2,Mmd_GER5_TP4a.variant2,Mmd_GER6_TP51D.variant2,Mmd_GER7_TP7-10F1A2.variant2,Mmd_GER8_TP81B.variant2
@@ -193,10 +219,11 @@ Mmc_CAST: Mmc_CAST10_H36.variant8,Mmc_CAST1_H12.variant8,Mmc_CAST2_H14.variant8,
 Ms_SPRE: Ms_SPRE1_SP36.variant9,Ms_SPRE2_SP39.variant9,Ms_SPRE3_SP41.variant9,Ms_SPRE4_SP51.variant9,Ms_SPRE5_SP62.variant9,Ms_SPRE6_SP68.variant9,Ms_SPRE7_SP69.variant9,Ms_SPRE8_SP70.variant9
 ```
 
-Instead of running the bcftools command an million times, I've thrown those IDs into a list and put the command in a for loop. This "get_fasta.sh" script is contained within the scripts/ directory. (Note: it will need to be run in a directory containing both the VCF and the reference FASTA). Here's how to run it:
+Instead of running the `bcftools` command separately for each of the 67 sequences, the `get_fasta.sh` script in the [scripts](https://github.com/ekhowell/phylo_class/tree/master/scripts) directory can be used to automatically run this command for each sample.
 `bash get_fasta.sh`
+**Note:** This script must be run in a directory containing both the VCF and the reference FASTA file. This may require moving files around.
 
-This first bit of the output should look something like this:
+The top of the screen output should look like this:
 ```
 Applied 0 variants
 Applied 0 variants
@@ -216,17 +243,18 @@ Applied 0 variants
 Applied 0 variants
 Applied 4 variants
 ```
-This is bcftools telling us how many sites in the reference FASTA it had to change in order to build each sample FASTA.
+This represents `bcftools` telling us how many sites in the reference FASTA had to be changed in order to build the FASTA for each sample.
 
 ## Creating Multi-sample FASTA File
-At this point, each sample (of which there are 67) should have its own FASTA file and within each FASTA file, the sequence should be divided up into 10 records that represent the 10 different exons in the PRDM9 CDS.
+After running the above script, each of the 67 sequences should have its own FASTA file that represents the PRDM9 locus. Within each FASTA file, the sequence should be divided into 10 records that represent the 10 different exons of the PRDM9 CDS. Some slight formatting needs to be performed before the sequences can be input into MUSCLE for alignment.
 
-In order to perform the multiple sequence alignment, we need to merge FASTA records such that there is a single record for the full PRDM9 locus AND we need to pull all of the per-sample FASTA records into one single file to give to MUSCLE. In addition, we want to make sure that we preserve the identity of each sample so we need to include the sample name in the FASTA record. 
+In order to perform the multiple sequence alignment, the exon-specific FASTA records within each file must be merged to generate a single record for the entire PRDM9 locus. In addition, the full set of per-sample FASTA sequences must be merged into a single file such that each FASTA record within the combined file represents the full PRDM9 sequence for a given samples. In order to retain information about the subspecies and subpopulation identity of each sequence, the sample name must be included in the header of each record within the combined FASTA file. 
 
-To perform this operation, move all of the FASTAs to their own directory (Note: in this repo it is the fastas/ directory) and run the combine_fastas.sh script in that directory. 
+To perform this set of operations, first move all of the FASTAs to their own directory (**Note:** This is the [fastas](https://github.com/ekhowell/phylo_class/tree/master/fastas) directory in the GitHub repository). Next, run the `combine_fastas.sh` script in the directory containing the FASTA files. 
 `bash combined_fastas.sh`
+**Note:** This script can be found in the [scripts](https://github.com/ekhowell/phylo_class/tree/master/scripts) directory.
 
-This should output a single FASTA named "combined_samples.fa". This file should contain 67 record, each of which represents the PRDM9 CDS for a single sample and whose header represents the sample name. Like this:
+This should output a single FASTA file named `combined_samples.fa`. This file should contain 67 records, each of which represents the PRDM9 CDS for a single sample and whose header represents the sample name. The top of the file looks like this:
 ```
 >Mmc_CAST10_H36.variant8_prdm9_cds.fa
 AGTCAGAAATTCCTCACTCAACATATGGAATGGAATCATCGCACTGAAAT
@@ -239,15 +267,14 @@ GTCAAATCATTTATTGCATCAGAAATCTCAAGTATTGAAAGACAATGTGG
 GCAATATTTCAGTGATAAGTCAAATGTCAATGAGCACCAGAAGACACACA
 CAGGGGAGAAGCCCTATGTTTGCAGGGAGTGTGGGCGGGGCTTTACACAG
 ```
-
-Now we are ready for the multiple sequence alignment!
+**Note:** This combined FASTA can be found in the [fastas](https://github.com/ekhowell/phylo_class/tree/master/fastas) directory.
 
 ## Generating Multiple Sequence Alignment with MUSCLE
 To generate the multiple sequence alignment using MUSCLE, run the following command on the FASTA file containing the combined samples.
 ```
 muscle -in combined_samples.fa -phyi -out combined_samples.aln
 ```
-This will produce an alignment in PHYLIP format within the "combined_samples.aln" file. The top of this output file should look like this:
+This will produce an alignment in PHYLIP format that is contained within the `combined_samples.aln` file. The top of this output file should look like this:
 ```
 67 2494
 Ms_SPRE1_S AGTCAGAAAT TCCTCACTCA ACATATGGAA TGGAATCATC GCACTGAAAT
@@ -261,7 +288,7 @@ Ms_SPRE8_S AGTCAGAAAT TCCTCACTCA ACATATGGAA TGGAATCATC GCACTGAAAT
 Mmm_AFG2_4 AGTCAGAAAT TCCTCACTCA ACATATGGAA TGGAATCATC GCACTGAAAT
 ```
 
-Now we can input this multiple sequence alignment into IQ-TREE to start our phylogenetic tree estimation.
+This multiple sequence alignment can be used as the starting input for phylogenetic tree estimation using IQ-TREE.
 
 ## Generating Phylogeny with IQ-TREE
 To perform the phylogenetic tree construction using IQ-TREE, run the following command on the alignment file generated from the MUSCLE step.
@@ -271,7 +298,7 @@ iqtree -s combined_samples.aln -m MFP -b 100
 
 This command strings together multiple of IQ-TREE's functions into a single line of code. The `-m MFP` argument tells IQ-TREE to use ModelFinderPlus to identify the best fit substitution model to use on the data. Then, IQ-TREE constructs a maximum likelihood tree from the alignment supplied by the `-s combined_samples.aln` argument using the best fit substitution model. After constructing the tree, the `-b 100` argument tells IQ-TREE to perform 100 non-parametric bootstrap replicates to evaluate branch supports. 
 
-After running this command, IQ-TREE should direct a lot of output to the screen. Once it has finished running, the final bit of output should look like this.
+After running this command, IQ-TREE should direct extensive output to the screen. Once it has finished running, the final section of output should look like this:
 ```
 Analysis results written to: 
   IQ-TREE report:                combined_samples.aln.iqtree
@@ -288,7 +315,7 @@ Bootstrap trees:          combined_samples.aln.boottrees
 ```
 This tells us what is contained in the multiple output files that are produced by IQ-TREE.
 
-
+The resulting phylogeny contained within the combined_samples.aln.treefile can be viewed and annotated with the [iTOL](https://itol.embl.de/) (interactive Tree of Life) tree viewer and annotation tool.
 
 
 
