@@ -1,7 +1,7 @@
 # Phylogenetics Final Report Reproducible Script
 #### By: Emma Howell
 #### Last Updated: 4/24/21
-Purpose: To record the steps used in the phylogenetic analysis of the PRDM9 locus in house mouse subspecies complex.
+Purpose: To record the steps used in the phylogenetic analysis of the PRDM9 locus in the house mouse subspecies complex.
 
 ## Note
 This README will include all the steps necessary to recreate this analysis. However, all of the required input files/data are contained within this repository. This allows users to bypass the steps that involve downloading the (large) VCF files and fetching/formatting the reference files and GTF file obtained from UCSC's Table Browser.
@@ -91,6 +91,7 @@ We can do this using the [UCSC Genome Table Browser](https://genome.ucsc.edu/cgi
 - Track: `NCBI RefSeq`
 - Table: `RefSeq All (ncbiRefSeq)`
 - Region: `chr17:15,543,072-15,563,331`
+
 Choose GTF as the file format and download the output table as `mm10_prdm9_ncbi_refseq_gtf.txt`.
 **Note:** This GTF file can also be found in the [refs](https://github.com/ekhowell/phylo_class/tree/master/refs) directory.
 
@@ -155,6 +156,7 @@ The entries into the Table Browser should be filled out as follows:
 - Track: `NCBI RefSeq`
 - Table: `RefSeq All (ncbiRefSeq)`
 - Region: `chr17:15,543,079-15,563,323`
+
 Choose sequence as the file format and download the output files as `mm10_prdm9_reference_sequence.fa`.
 
 On the next page, make sure that only the following options are checked in the "Sequence Retrieval Region Options" section:
